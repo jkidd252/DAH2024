@@ -14,6 +14,7 @@ GPIO.setmode(GPIO.BCM)
 Switch = 17
 GPIO.setup(Switch, GPIO.OUT)
 
+target = 20 # set the target the system will try to achieve
 # list to store values for plotting
 temp_b = []
 temp_w = []
@@ -28,12 +29,12 @@ time_l.append(time.time())
 
 class PID(object):
     def __init__(self, KP, KI, KD, target):
-        self.kp = KP
+        self.kp = KP         # add determined values
         self.ki = KI
         self.kd = KD
         self.setpoint = target
         self.error = 0
-        self.intergral_error = 0
+        self.intergral_error = 0    # starting values 
         self.error_last = 0
         self.deriv_error = 0
         self.output = 0
@@ -45,26 +46,27 @@ class PID(object):
 
         self.output = self.kp*self.error + self.ki*self.intergral_error + self.kd*self.deriv_error
 
+        if self.output > 0:     # should probably make these conditions less strict
+             state = GPIO.HIGH
+        elif self.output < 0:
+             state = GPIO.LOW
         # conditions related to timing the peltier => dont power for too long etc.
         # need to do calibration with PWM stuff to see what this has to be
 
-        return self.output
+        return state
 
 
 
 # beginning feedback loop
-while len(time_l) < 16:
-	GPIO.output(Switch, GPIO.HIGH) 
-	time.sleep(5)
+while len(time_l) < 20:
+	GPIO.output(Switch, PID.compute( tmp_b.getCelsius(), target )) # will we need a multi-sensor based PID response calculation
 	print('black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius()))
-	temp_b.append(tmp_b.getCelsius())
+	
+    # append values for plotting
+    temp_b.append(tmp_b.getCelsius())
 	temp_w.append(tmp_w.getCelsius())
 	temp_ref.append(tmp_ref.getCelsius())
 	time_l.append(time.time())
-	
-	GPIO.output(Switch, GPIO.LOW)
-
-
 
 
 # plotting collected data => should make this a live plot
