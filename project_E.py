@@ -1,12 +1,12 @@
 import time
 import pylab
-import numpy
+import numpy as np
 import RPi.GPIO as GPIO
 from DAH import DS18B20
 from matplotlib import pyplot as plt
 
-tmp_b = DS18B20( address="28-000005e9a98b")
-tmp_w = DS18B20( address="28-00000d7cf96a")
+tmp_b = DS18B20( address="28-00000cf7be3e")
+tmp_w = DS18B20( address="28-00000d7c6650")
 tmp_ref = DS18B20( address="10-000803471e5e")
 tmp_ref2 = DS18B20( address="10-000802de0f29")
 
@@ -19,13 +19,15 @@ target = 20 # set the target the system will try to achieve
 temp_bL = []
 temp_wL = []
 temp_refL = []
+temp_ref2L = []
 time_L = []
 
 # appending t=0 values
-temp_b.append(tmp_b.getCelsius())
-temp_w.append(tmp_w.getCelsius())
-temp_ref.append(tmp_ref.getCelsius())
-time_l.append(time.time())
+temp_bL.append(tmp_b.getCelsius())
+temp_wL.append(tmp_w.getCelsius())
+temp_refL.append(tmp_ref.getCelsius())
+temp_ref2L.append(tmp_ref2.getCelsius())
+time_L.append(time.time())
 
 class PID(object):
     def __init__(self, KP, KI, KD, target):
@@ -57,34 +59,42 @@ class PID(object):
 
 
 
+GPIO.output( Switch, GPIO.HIGH )
 # beginning feedback loop
-while len(time_l) < 20:
-	GPIO.output(Switch, PID.compute( tmp_b.getCelsius(), target )) # will we need a multi-sensor based PID response calculation
-	print('black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius()))
+while len(time_L) < 20:
+	#GPIO.output(Switch, PID.compute( tmp_b.getCelsius(), target )) # will we need a multi-sensor based PID response calculation
+	print('black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius())+', ref2: '+str(tmp_ref2.getCelsius()))
 	
     # append values for plotting
-    temp_bL.append(tmp_b.getCelsius())
-    temp_wL.append(tmp_w.getCelsius())
+	temp_bL.append(tmp_b.getCelsius())
+	temp_wL.append(tmp_w.getCelsius())
 	temp_refL.append(tmp_ref.getCelsius())
-	time_l.append(time.time())
+	temp_ref2L.append(tmp_ref.getCelsius())
+	time_L.append(time.time())
+	time.sleep(0.5)
 
-
+GPIO.output( Switch, GPIO.LOW )
 # plotting collected data => should make this a live plot
 fig, ax1 = plt.subplots()
-time = np.array([time_l])
+time = np.array(time_L)
 time_actual = time - time[0]
 
-ax1.plot(time_actual, temp_b, label='black', color='r')
-ax1.plot(time_actual, temp_w, label='white', color='blue')
+data_set = np.array([time_actual, temp_bL, temp_wL, temp_refL, temp_ref2L])
+np.savetxt('data_set_10s.txt', data_set)
+
+
+ax1.plot(time_actual, temp_bL, label='black', color='r')
+ax1.plot(time_actual, temp_wL, label='white', color='blue')
 ax1.legend()
 ax1.set_xlabel('Time [Second]')
 ax1.set_ylabel('Temp [Degree C]')
-ax1.ylim(15, 23)
+ax1.set_ylim(15, 23)
 
 ax2 = ax1.twinx()
-ax2.plot(time_l, temp_ref, label='ref', color='green')
+ax2.plot(time_actual, temp_refL, label='ref', color='green')
+ax2.plot(time_actual, temp_ref2L, label='ref2', color='green')
 ax2.legend()
 ax2.set_ylabel('Temp [Degree C]')
-ax2.ylim(15, 23)
+ax2.set_ylim(15, 23)
 fig.tight_layout()
 plt.show()
