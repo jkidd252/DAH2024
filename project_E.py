@@ -16,10 +16,10 @@ GPIO.setup(Switch, GPIO.OUT)
 
 target = 20 # set the target the system will try to achieve
 # list to store values for plotting
-temp_b = []
-temp_w = []
-temp_ref = []
-time_l = []
+temp_bL = []
+temp_wL = []
+temp_refL = []
+time_L = []
 
 # appending t=0 values
 temp_b.append(tmp_b.getCelsius())
@@ -63,9 +63,9 @@ while len(time_l) < 20:
 	print('black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius()))
 	
     # append values for plotting
-    temp_b.append(tmp_b.getCelsius())
-	temp_w.append(tmp_w.getCelsius())
-	temp_ref.append(tmp_ref.getCelsius())
+    temp_bL.append(tmp_b.getCelsius())
+    temp_wL.append(tmp_w.getCelsius())
+	temp_refL.append(tmp_ref.getCelsius())
 	time_l.append(time.time())
 
 
