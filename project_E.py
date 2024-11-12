@@ -14,7 +14,7 @@ GPIO.setmode(GPIO.BCM)
 Switch = 17
 GPIO.setup(Switch, GPIO.OUT)
 
-target = 20 # set the target the system will try to achieve
+target = 19.5 # set the target the system will try to achieve
 # list to store values for plotting
 temp_bL = []
 temp_wL = []
@@ -41,28 +41,28 @@ class PID(object):
         self.deriv_error = 0
         self.output = 0
     def compute(self, temp):
-        self.error = target - temp
+        self.error = self.setpoint - temp
         self.intergral_error += self.error
-        self.deriv_error = (self.error - self.error_last) / Time_step  #step from sim params or sampling
+        self.deriv_error = (self.error - self.error_last) / 0.5  #step from sim params or sampling
         self.error_last = self.error
 
         self.output = self.kp*self.error + self.ki*self.intergral_error + self.kd*self.deriv_error
+        print(self.output)
 
-        if self.output > 0:     # should probably make these conditions less strict
+        if self.output < 0:     # should probably make these conditions less strict
              state = GPIO.HIGH
-        elif self.output < 0:
+        elif self.output >= 0: # this 
              state = GPIO.LOW
         # conditions related to timing the peltier => dont power for too long etc.
         # need to do calibration with PWM stuff to see what this has to be
 
         return state
 
+s1 = PID(100, 0, 0, target)
 
-
-GPIO.output( Switch, GPIO.HIGH )
 # beginning feedback loop
 while len(time_L) < 20:
-	#GPIO.output(Switch, PID.compute( tmp_b.getCelsius(), target )) # will we need a multi-sensor based PID response calculation
+	GPIO.output(Switch, s1.compute( tmp_b.getCelsius())) # will we need a multi-sensor based PID response calculation
 	print('black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius())+', ref2: '+str(tmp_ref2.getCelsius()))
 	
     # append values for plotting
@@ -71,16 +71,16 @@ while len(time_L) < 20:
 	temp_refL.append(tmp_ref.getCelsius())
 	temp_ref2L.append(tmp_ref.getCelsius())
 	time_L.append(time.time())
-	time.sleep(0.5)
+	time.sleep(0.1)
 
 GPIO.output( Switch, GPIO.LOW )
 # plotting collected data => should make this a live plot
 fig, ax1 = plt.subplots()
-time = np.array(time_L)
-time_actual = time - time[0]
+time1 = np.array(time_L)
+time_actual = time1 - time1[0]
 
 data_set = np.array([time_actual, temp_bL, temp_wL, temp_refL, temp_ref2L])
-np.savetxt('data_set_10s.txt', data_set)
+np.savetxt('data_set_10s'+str(time.time())+'.txt', data_set)
 
 
 ax1.plot(time_actual, temp_bL, label='black', color='r')
@@ -91,6 +91,7 @@ ax1.set_ylabel('Temp [Degree C]')
 ax1.set_ylim(15, 23)
 
 ax2 = ax1.twinx()
+ax2.axhline(target, linestyle='dashed', color='black', alpha=0.5)
 ax2.plot(time_actual, temp_refL, label='ref', color='green')
 ax2.plot(time_actual, temp_ref2L, label='ref2', color='green')
 ax2.legend()
