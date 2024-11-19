@@ -16,7 +16,7 @@ Switch = 17
 # not using PWM
 # GPIO.setup(Switch, GPIO.OUT)
 # using PWM
-pwm = GPIO.PWM(Switch, 10)
+pwm = GPIO.PWM(Switch, 5)   # PWM frequency must exceed that of the evaluation of the loop
 
 target = 19.5 # set the target the system will try to achieve
 # list to store values for plotting
@@ -53,16 +53,16 @@ class PID(object):
         self.output = self.kp*self.error + self.ki*self.intergral_error + self.kd*self.deriv_error
         print(self.output)            
 
-        if self.output < -1:     # should probably make these conditions less strict
+        if self.output < -1.5:     # should probably make these conditions less strict
              #state = GPIO.HIGH
              state = 100
-        elif self.output >= +1: # this 
+        elif self.output >= +1.5 or -0.5 <= self.output <= 0.5: 
              #state = GPIO.LOW
             state = 0 
         else:
-            if -1 <= self.output <= 0:
+            if -1.5 <= self.output < 0.5:
                 state  = self.output*-100
-            elif 0 < self.output < 1:
+            elif 0.5 < self.output < 1.5:
                 state = (1- self.output)*100 
             else:
                 break
@@ -77,7 +77,7 @@ s1 = PID(100, 0, 0, target)
 while len(time_L) < 20:
     state = s1.compute( tmp_b.getCelsius())
     
-    #GPIO.output(Switch, state) # will we need a multi-sensor based PID response calculation
+    #GPIO.output(Switch, state)    # a binary response to the PID error func is also suported by switching the GPIO from high to low on each cycle
     pwm.ChangeDutyCycle( state )
 
     print('Duty Cycle : '+str(state)+' TEMPS - black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius())+', ref2: '+str(tmp_ref2.getCelsius()))
@@ -88,7 +88,7 @@ while len(time_L) < 20:
 	temp_refL.append(tmp_ref.getCelsius())
 	temp_ref2L.append(tmp_ref.getCelsius())
 	time_L.append(time.time())
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 GPIO.output( Switch, GPIO.LOW )
 # plotting collected data => should make this a live plot
