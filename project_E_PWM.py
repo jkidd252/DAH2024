@@ -56,7 +56,7 @@ class PID(object):
         if self.output < -1.5:     # should probably make these conditions less strict
              #state = GPIO.HIGH
              state = 100
-        elif self.output >= +1.5 or -0.5 <= self.output <= 0.5: 
+        elif self.output >= +1.5 or -0.5 <= self.output <= 0.5:      # conditions are too small ~ output is at least x10 bigger.
              #state = GPIO.LOW
             state = 0 
         else:
@@ -71,7 +71,7 @@ class PID(object):
         return state
 
 # add PID coeffs 
-s1 = PID(100, 0, 0, target)
+s1 = PID(100, 1, 1, target)
 
 # beginning feedback loop
 while len(time_L) < 20:
@@ -83,15 +83,15 @@ while len(time_L) < 20:
     print('Duty Cycle : '+str(state)+' TEMPS - black: '+str(tmp_b.getCelsius())+', white: '+str(tmp_w.getCelsius())+', ref: '+str(tmp_ref.getCelsius())+', ref2: '+str(tmp_ref2.getCelsius()))
 	
     # append values for plotting
-	temp_bL.append(tmp_b.getCelsius())
-	temp_wL.append(tmp_w.getCelsius())
-	temp_refL.append(tmp_ref.getCelsius())
-	temp_ref2L.append(tmp_ref.getCelsius())
-	time_L.append(time.time())
-	time.sleep(0.5)
+    temp_bL.append(tmp_b.getCelsius())
+    temp_wL.append(tmp_w.getCelsius())
+    temp_refL.append(tmp_ref.getCelsius())
+    temp_ref2L.append(tmp_ref.getCelsius())
+    time_L.append(time.time())
+    time.sleep(0.5)
 
 GPIO.output( Switch, GPIO.LOW )
-# plotting collected data => should make this a live plot
+# plotting collected data => should make this a live plot (couldn't figure it out)
 fig, ax1 = plt.subplots()
 time1 = np.array(time_L)
 time_actual = time1 - time1[0]
